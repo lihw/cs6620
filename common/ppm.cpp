@@ -1,7 +1,21 @@
+/**
+ * \file ppm.cpp
+ * \author lihw (lihw81@gmail.com)
+ * \changelog
+ * - 2019/09/03 initial check in
+ *
+ * Read and write to .ppm image files.
+ *
+ * Borrow the code from glm.
+ */
 
+#include "ppm.h"
 
+#include "common.h"
 
-/* glmReadPPM: read a PPM raw (type P6) file.  The PPM file has a header
+#include <cstdio>
+
+/* ReadPPM: read a PPM raw (type P6) file.  The PPM file has a header
  * that should look something like:
  *
  *    P6
@@ -30,7 +44,7 @@
  *
  */
 unsigned char* 
-glmReadPPM(char* filename, int* width, int* height)
+ReadPPM(char* filename, int* width, int* height)
 {
     FILE* fp;
     int i, w, h, d;
@@ -39,7 +53,7 @@ glmReadPPM(char* filename, int* width, int* height)
     
     fp = fopen(filename, "rb");
     if (!fp) {
-        perror(filename);
+        LOG(ERROR) << "Fail to open " << filename;
         return NULL;
     }
     
@@ -47,7 +61,7 @@ glmReadPPM(char* filename, int* width, int* height)
        correct magic cookie for a raw PPM file. */
     fgets(head, 70, fp);
     if (strncmp(head, "P6", 2)) {
-        fprintf(stderr, "%s: Not a raw PPM file\n", filename);
+        LOG(ERROR) << filename << "": Not a raw PPM file";
         return NULL;
     }
     
@@ -75,3 +89,29 @@ glmReadPPM(char* filename, int* width, int* height)
     return image;
 }
 
+/**
+ * Write the image into an RGB .ppm file.
+ */
+bool
+WritePPM(char* filename, int width, int height, const unsigned char *image)
+{
+    FILE* fp;
+    unsigned char* image;
+    char head[70];          /* max line <= 70 in PPM (per spec). */
+    
+    fp = fopen(filename, "wb");
+    if (!fp) {
+        LOG(ERROR) << "Fail to write to " << filename;
+        return false;
+    }
+    
+    /* Write the header */
+    fprintf(fp, "P6\n");
+    fprintf(fp, "%d %d %d", width, height, 255);
+    
+    /* grab all the image data in one fell swoop. */
+    fwrite(image, sizeof(unsigned char), width * height * 3, fp);
+    fclose(fp);
+    
+    return true;
+}

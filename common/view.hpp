@@ -43,6 +43,7 @@ private:
     u32 _height;
 };
 
+extern void CvtRgba32f2Rgb8(const float *rgba32f, u32 width, u32 height, u8 *rgb8);
 
 CS6620_END_NAMESPACE
 
