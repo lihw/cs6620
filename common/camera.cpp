@@ -9,14 +9,16 @@
 
 #include "camera.hpp"
 
+#include "view.hpp"
+
 CS6620_NAMESPACE_BEGIN
 
 Camera::Camera()
 {
-    this->position = vec3f(0.0f, 0.0f, 0.0f);
+    this->position = vec3(0.0f, 0.0f, 0.0f);
     this->target   = vec3(0.0f, 0.0f, 0.0f);
     this->up       = vec3(0.0f, 1.0f, 0.0f);
-    this->fov      = 45.0f;
+    this->fovy     = 45.0f;
     this->width    = 512;
     this->height   = 512;
 }
@@ -25,59 +27,60 @@ Camera::~Camera()
 {
 }
 
-bool Camera::unserialize(XmlElement *xmlElement) noexcept 
+bool Camera::unserialize(tinyxml2::XMLElement *xmlElement) noexcept 
 {
-    XmlElement *childElement = xmlElement->FirstChildElement();
+    tinyxml2::XMLElement *childElement = xmlElement->FirstChildElement();
 
     bool seenPosition = false;
     bool seenTarget = false;
     bool seenFov = false;
     bool seenWidth = false;
     bool seenHeight = false;
+    bool seenUp = false;
 
     // Parse the element and extract properties of the camera.
     while (childElement != nullptr)
     {
-        const char *tagName = childElement->GetName();
-        if (strncmp(tagName, "position") == 0)
+        const char *tagName = childElement->Name();
+        if (strncmp(tagName, "position", 8) == 0)
         {
-            this->position.x = xmlElement->FloatAttribute("x");
-            this->position.y = xmlElement->FloatAttribute("y");
-            this->position.z = xmlElement->FloatAttribute("z");
+            this->position.x = childElement->FloatAttribute("x");
+            this->position.y = childElement->FloatAttribute("y");
+            this->position.z = childElement->FloatAttribute("z");
 
             seenPosition = true;
         }
-        else if (strncmp(tagName, "target") == 0)
+        else if (strncmp(tagName, "target", 6) == 0)
         {
-            this->target.x = xmlElement->FloatAttribute("x");
-            this->target.y = xmlElement->FloatAttribute("y");
-            this->target.z = xmlElement->FloatAttribute("z");
+            this->target.x = childElement->FloatAttribute("x");
+            this->target.y = childElement->FloatAttribute("y");
+            this->target.z = childElement->FloatAttribute("z");
             
             seenTarget = true;
         }
-        else if (strncmp(tagName, "up") == 0)
+        else if (strncmp(tagName, "up", 2) == 0)
         {
-            this->up.x = xmlElement->FloatAttribute("x");
-            this->up.y = xmlElement->FloatAttribute("y");
-            this->up.z = xmlElement->FloatAttribute("z");
+            this->up.x = childElement->FloatAttribute("x");
+            this->up.y = childElement->FloatAttribute("y");
+            this->up.z = childElement->FloatAttribute("z");
             
             seenUp = true;
         }
-        else if (strncmp(tagName, "fov") == 0)
+        else if (strncmp(tagName, "fov", 3) == 0)
         {
-            this->fov = xmlElement->FloatAttribute("value");
+            this->fovy = childElement->FloatAttribute("value");
 
             seenFov = true;
         }
-        else if (strncmp(tagName, "width") == 0)
+        else if (strncmp(tagName, "width", 5) == 0)
         {
-            this->width = xmlElement->IntAttribute("value");
+            this->width = childElement->IntAttribute("value");
 
             seenWidth = true;
         }
-        else if (strncmp(tagName, "height") == 0)
+        else if (strncmp(tagName, "height", 6) == 0)
         {
-            this->height = xmlElement->IntAttribute("value");
+            this->height = childElement->IntAttribute("value");
 
             seenHeight = true;
         }
@@ -111,25 +114,26 @@ bool Camera::unserialize(XmlElement *xmlElement) noexcept
     }
 
     // Update the nearo, nearx and neary.
-    vec3 lookTo = target - position;
-    lookTo.Normalize();
+    // The world space is z-up right-hand.
 
-    mat4 view = View(this->position, this->target, this->up);
+    f32 tanFovY = tanf(this->fovy * 0.5f);
+    f32 spany = this->target.Length() * tanFovY;
+    f32 spanx = spany * (f32)this->width / (f32)this->height;
 
-    this->nearo = this->position - view.GetColumn(2) * 1.0f; // The near plane is 1 meter away.
-    this->nearx = view->GetColumn(0);
-    this->neary = view->GetColumn(1);
+    this->nearo = this->target; 
+    this->nearx = vec3(1.0f, 0.0f, 0.0f) * spanx; // FIXME: view.GetColumn(0).XYZ();
+    this->nearz = vec3(0.0f, 0.0f, 1.0f) * spany; // FIXME: view.GetColumn(1).XYZ();
 
     return true;
 }
     
-RayIterator Camera::beginRay() const
+Camera::RayIterator Camera::beginRay() 
 {
     RayIterator rayIterator(this);
     return rayIterator;
 }
 
-RayIterator Camera::endRay() const
+Camera::RayIterator Camera::endRay() 
 {
     RayIterator rayIterator(this);
     rayIterator._x = 0;

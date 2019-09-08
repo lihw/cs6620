@@ -9,9 +9,11 @@
 
 #include "view.hpp"
 
+#include "ppm.h"
+
 #include <cassert>
 
-CS6620_BEGIN_NAMESPACE
+CS6620_NAMESPACE_BEGIN
 
 View::View(u32 width, u32 height)
 {
@@ -20,7 +22,7 @@ View::View(u32 width, u32 height)
     this->_width = width;
     this->_height = height;
 
-    this->_image = new f32 [width * height * 4];
+    this->_image = new f32 [width * height * 3];
 }
     
 View::~View()
@@ -28,32 +30,31 @@ View::~View()
     delete [] this->_image;
 }
 
-bool View::dump(const char *outputFilePath) noexcept const
+bool View::dump(const char *outputFilePath) const noexcept 
 {
-    u8 *imageRGB8 = new u8 [this->_width * this->_height, this->_image];
-    CvtRgba32f2Rgb8(this->_image, this->_width, this->_height, imageRGB8);
+    u8 *imageRGB8 = new u8 [this->_width * this->_height * 3];
+    CvtRgb32f2Rgb8(this->_image, this->_width, this->_height, imageRGB8);
     bool ret = WritePPM(outputFilePath, this->_width, this->_height, imageRGB8);
     delete [] imageRGB8;
     return ret;
 }
     
-void View::write(const vec2u coordinate, const vec4 &color)
+void View::write(const vec2u coordinate, const vec3 &color)
 {
-    u32 offset = (coordinate.y * this->_width + coordinate.x) * 4;
+    u32 offset = (coordinate.y * this->_width + coordinate.x) * 3;
     f32 *p = &this->_image[offset];
     p[0] = color.x;
     p[1] = color.y;
     p[2] = color.z;
-    p[3] = color.w;
 }
 
-void CvtRgba32f2Rgb8(const float *rgba32f, u32 width, u32 height, u8 *rgb8)
+void CvtRgb32f2Rgb8(const float *rgb32f, u32 width, u32 height, u8 *rgb8)
 {
     for (u32 i = 0; i < height; i++)
     for (u32 j = 0; j < width; j++)
     {
-        const float *src = rgba32[(i * width + j) * 4];
-        u8 *dst = rgb8[(i * width + j) * 3];
+        const float *src = &rgb32f[(i * width + j) * 3];
+        u8 *dst = &rgb8[(i * width + j) * 3];
 
         dst[0] = (u8)(src[0] * 255.0f);
         dst[1] = (u8)(src[1] * 255.0f);
@@ -61,7 +62,5 @@ void CvtRgba32f2Rgb8(const float *rgba32f, u32 width, u32 height, u8 *rgb8)
      }
 }
 
-CS6620_END_NAMESPACE
+CS6620_NAMESPACE_END
 
-
-#endif // !VIEW_HPP

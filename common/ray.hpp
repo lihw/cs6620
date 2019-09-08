@@ -13,15 +13,15 @@
 
 #include "common.h"
 
-#include "cvVector.h"
 
-CS6620_BEGIN_NAMESPACE
+CS6620_NAMESPACE_BEGIN
 
-struct Ray
+class Ray
 {
+public:
     vec3 origin;
     vec3 direction;
-
+public:
     explicit Ray()
     {
         origin.Zero();
@@ -30,7 +30,7 @@ struct Ray
 };
 
 
-CS6620_END_NAMESPACE
+CS6620_NAMESPACE_END
 
 
 #endif // !RAY_HPP

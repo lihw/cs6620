@@ -9,9 +9,14 @@
 
 #include "scene_node.hpp"
 
+#include <list>
+
 CS6620_NAMESPACE_BEGIN
 
-SceneNode::SceneNode(const char *nameStr)
+//
+// class SceneNode
+//
+SceneNode::SceneNode(const char *nameStr, SceneNode *parent)
     : name(nameStr)
 {
     this->type = Type::UNKNOWN;
@@ -20,94 +25,128 @@ SceneNode::SceneNode(const char *nameStr)
     this->rotate.Zero();
     this->translate.Zero();
 
-    this->transform.Identity();
-    this->globalTransform.Identity();
+    this->transform = mat4::Identity();
+    this->globalTransform = mat4::Identity();
+
+    this->parent = parent;
 }
 
 SceneNode::~SceneNode()
 {
 }
 
-GeometricNode::Geometric(const char *name) 
-    : SceneNode(name)
+bool SceneNode::unserialize(tinyxml2::XMLElement *xmlElement) noexcept
 {
-    this->type = SceneNode::Type::GEOMETRIC;
+    this->name = xmlElement->Attribute("name");
+
+    return true;
+}
+
+//
+// class GeometricNode
+//
+GeometricNode::GeometricNode(const char *name, SceneNode *parent) 
+    : SceneNode(name, parent)
+{
+    this->type = SceneNode::Type::GEOMETRY;
+}
+
+GeometricNode::~GeometricNode()
+{
 }
     
-void GeometricObject::_parseScale(XmlElement *xmlElement)
+void GeometricNode::_parseScale(tinyxml2::XMLElement *xmlElement)
 {
-    assert(strncmp(xmlElement->GetText(), "scale", 5) == 0);
+    assert(strncmp(xmlElement->Name(), "scale", 5) == 0);
     this->scale = xmlElement->FloatAttribute("value");
 }
 
-void GeometricObject::_parseTranslate(XmlElement *xmlElement)
+void GeometricNode::_parseTranslate(tinyxml2::XMLElement *xmlElement)
 {
-    assert(strncmp(xmlElement->GetName(), "translate", 9) == 0);
+    assert(strncmp(xmlElement->Name(), "translate", 9) == 0);
     this->translate.x = xmlElement->FloatAttribute("x");
     this->translate.y = xmlElement->FloatAttribute("y");
     this->translate.z = xmlElement->FloatAttribute("z");
 }
 
-void GeometricObject::_parseRotate(XmlElement *xmlElement)
+void GeometricNode::_parseRotate(tinyxml2::XMLElement *xmlElement)
 {
-    assert(strncmp(xmlElement->GetName(), "rotate", 6) == 0);
+    assert(strncmp(xmlElement->Name(), "rotate", 6) == 0);
     this->rotate.x = xmlElement->FloatAttribute("x");
     this->rotate.y = xmlElement->FloatAttribute("y");
     this->rotate.z = xmlElement->FloatAttribute("z");
 }
 
-bool GeometricObject::unserialize(XmlElement *xmlElement) noexcept
+bool GeometricNode::unserialize(tinyxml2::XMLElement *xmlElement) noexcept
 {
-    this->name = xmlElement->StringAttribute("name");
-    this->type = xmlElement->StringAttribute("type");
+    SceneNode::unserialize(xmlElement);
 
-    XmlElement *childElement = xmlElement->FirstChildElement();
+    tinyxml2::XMLElement *childElement = xmlElement->FirstChildElement();
 
     bool seenTranslate = false;
     bool seenScale = false;
     bool seenRotate  = false;
 
+    // Caching the child element node. We can process child elements 
+    // before finishing their parent. Otherwise since parent's transform
+    // is not yet setup, the global transform of child elements are not 
+    // correct.
+    std::list<tinyxml2::XMLElement *> childXmlElements;
+
     // Parse the element and extract properties of the camera.
     while (childElement != nullptr)
     {
-        const char *tagName = childElement->GetName();
-        if (strncmp(tagName, "translate") == 0)
+        const char *tagName = childElement->Name();
+        if (strncmp(tagName, "translate", 9) == 0)
         {
             this->_parseTranslate(childElement);   
             seenTranslate = true;
         }
-        else if (strncmp(tagName, "scale") == 0)
+        else if (strncmp(tagName, "scale", 5) == 0)
         {
             this->_parseScale(childElement);   
             seenScale = true;
         }
-        else if (strncmp(tagName, "rotate") == 0)
+        else if (strncmp(tagName, "rotate", 6) == 0)
         {
             this->_parseRotate(childElement);   
             seenRotate = true;
         }
-        else if (strncmp(tagName, "object") == 0)
+        else if (strncmp(tagName, "object", 6) == 0)
         {
-            // See another node under this, we parse it recursively.
-            GeometricNode *childNode = new GeometricNode();
-            // This node is child of this one.
-            childNode->parent = this;
-            this->children.push_back(childNode);
-            childNode->unserialize(childElement);
-        }
-
-        // Update the local transform.
-        this->updateTransform(); 
-        // Update the global transform.
-        this->updateGlobalTransform();
-
-        if (!seenTranslate || !seenRotate || !seenScale)
-        {
-            LOG(WARNING) << "Doesn't see all transform about Node ''" << this->name << "'. Use default values";
+            childXmlElements.push_back(childElement);
         }
 
         childElement = childElement->NextSiblingElement();
     }
+
+    // Update the local transform.
+    this->_updateTransform();
+    // Update the global transform.
+    this->_updateGlobalTransform();
+
+    if (!seenTranslate || !seenRotate || !seenScale)
+    {
+        LOG(WARNING) << "Doesn't see all transform about Node ''" << this->name << "'. Use default values";
+    }
+
+    for (auto &&childXmlElement : childXmlElements)
+    {
+        SceneNode *childNode = SceneNodeFactory::unserialize(childXmlElement, this);
+        if (childNode != nullptr)
+        {
+            this->children.push_back(childNode);
+        }
+        else
+        {
+            LOG(ERROR) << "Fail to unserialize " << childElement->Name();
+            // FIXME: in a recursion call, return from a call at the bottom doesn't
+            // quit the entire call stack.
+            return false;
+        }
+    }
+
+    return true;
 }
     
 void GeometricNode::_updateTransform()
@@ -116,19 +155,19 @@ void GeometricNode::_updateTransform()
     scaling.SetScale(this->scale);
 
     mat4 rotation;
-    rotation.SetRotationXZY(this->rotate.x, this->rotate.y, this->rotate.z);
+    rotation.SetRotationXYZ(this->rotate.x, this->rotate.y, this->rotate.z);
 
     mat4 translation;
-    translation.SetTranslation(this->translate.x, this->translate.y, this->translate.z);
+    translation.SetTranslation(vec3(this->translate.x, this->translate.y, this->translate.z));
         
-    this->transform = scaling * rotation * translation; // The matrix is row major.
+    this->transform = translation * rotation * scaling; 
 }
     
 void GeometricNode::_updateGlobalTransform()
 {
     if (this->parent != nullptr)
     {
-        this->globalTransform = this->transform * this->globalTransform;
+        this->globalTransform = this->parent->globalTransform * this->transform;
     }
     else
     {
@@ -136,8 +175,8 @@ void GeometricNode::_updateGlobalTransform()
     }
 }
 
-GeometricSphereNode::GeometricSphereNode()
-    : GeometricNode()
+GeometricSphereNode::GeometricSphereNode(const char *name, SceneNode *parent)
+    : GeometricNode(name, parent)
 {
 }
 
@@ -145,7 +184,7 @@ GeometricSphereNode::~GeometricSphereNode()
 {
 }
 
-bool GeometricSphereNode::unserialize(XmlElement *xmlElement) noexcept
+bool GeometricSphereNode::unserialize(tinyxml2::XMLElement *xmlElement) noexcept
 {
     if (!GeometricNode::unserialize(xmlElement))
     {
@@ -157,19 +196,48 @@ bool GeometricSphereNode::unserialize(XmlElement *xmlElement) noexcept
     this->_position.z = this->globalTransform[14];
 
     this->_radius = this->globalTransform.GetRow(0).Length();
+
+    return true;
 }
 
-bool GeometricSphereNode::intersect(const Ray &ray) noexcept 
+bool GeometricSphereNode::intersect(const Ray &ray, vec3 &out_position, vec3 &out_normal) noexcept
 {
     // The projection of the distance between sphere and ray origin onto the ray direction.
     vec3 direction = this->_position - ray.origin;
     f32 projection = direction.Dot(ray.direction);
 
     // Compute the distance from the sphere center to the ray direction.
-    f32 distance2 = direction.x * direction.x + direction.y * direction.y + direction.z * direction.z - 
-        projection * projection 
+    f32 distance2 = direction.LengthSquared() - projection * projection;
 
     return distance2 <= this->_radius * this->_radius;
+}
+    
+//
+// class SceneNodeFactory
+//
+SceneNodeFactory::SceneNodeFactory()
+{
+}
+
+SceneNodeFactory::~SceneNodeFactory()
+{
+}
+
+SceneNode *SceneNodeFactory::unserialize(tinyxml2::XMLElement *xmlElement, SceneNode *parent) noexcept
+{
+    const char *type = xmlElement->Attribute("type");
+    const char *name = xmlElement->Attribute("name");
+
+    if (strncmp(type, "sphere", 6) == 0)
+    {
+        GeometricSphereNode *node = new GeometricSphereNode(name, parent);
+        if (node->unserialize(xmlElement))
+        {
+            return node;
+        }
+    }
+
+    return nullptr;
 }
 
 CS6620_NAMESPACE_END

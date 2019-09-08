@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.779
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "project1", "project1.vcxproj", "{19819CB6-6411-49A4-A83A-8D1E312D66DC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2E175BE1-231C-4A8B-AE9B-80DAA37DDE17} = {2E175BE1-231C-4A8B-AE9B-80DAA37DDE17}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "librt", "librt.vcxproj", "{2E175BE1-231C-4A8B-AE9B-80DAA37DDE17}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{19819CB6-6411-49A4-A83A-8D1E312D66DC}.Debug|x64.ActiveCfg = Debug|x64
+		{19819CB6-6411-49A4-A83A-8D1E312D66DC}.Debug|x64.Build.0 = Debug|x64
+		{19819CB6-6411-49A4-A83A-8D1E312D66DC}.Release|x64.ActiveCfg = Release|x64
+		{19819CB6-6411-49A4-A83A-8D1E312D66DC}.Release|x64.Build.0 = Release|x64
+		{2E175BE1-231C-4A8B-AE9B-80DAA37DDE17}.Debug|x64.ActiveCfg = Debug|x64
+		{2E175BE1-231C-4A8B-AE9B-80DAA37DDE17}.Debug|x64.Build.0 = Debug|x64
+		{2E175BE1-231C-4A8B-AE9B-80DAA37DDE17}.Release|x64.ActiveCfg = Release|x64
+		{2E175BE1-231C-4A8B-AE9B-80DAA37DDE17}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BEF4FB9D-EC57-49E8-8C9C-1D08CD81370B}
+	EndGlobalSection
+EndGlobal

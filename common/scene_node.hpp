@@ -16,10 +16,12 @@
 #include <string>
 
 #include "tinyxml2.h"
-#include "cvMatrix.h"
-#include "cvVector.h"
+#include "cyMatrix.h"
+#include "cyVector.h"
 
-CS6620_BEGIN_NAMESPACE
+#include "ray.hpp"
+
+CS6620_NAMESPACE_BEGIN
 
 /**
  * The base class of scene nodes.
@@ -30,18 +32,18 @@ public:
     enum class Type
     {
         UNKNOWN,        /**< Unknown. */
+        ROOT,           /**< The scene root. */
         GEOMETRY,       /**< A geometric object. */
-        CAMERA,         /**< A camera object. */
     } type;       
 
     std::string name;
 
-    f32   scale;        /**< Local transformation. */
+    f32  scale;        /**< Local transformation. */
     vec3 translate;
     vec3 rotate;
 
-    mat4f transform; /**< Local transformation matrix. */
-    mat4f globalTransform; /**< The global transformation matrix. */
+    mat4 transform; /**< Local transformation matrix. */
+    mat4 globalTransform; /**< The global transformation matrix. */
 
     SceneNode               *parent    = nullptr;
     std::vector<SceneNode *> children;
@@ -50,7 +52,7 @@ public:
     /**
      * Constructor
      */
-    SceneNode(const char *name);
+    SceneNode(const char *name, SceneNode *parent);
     /**
      * Destructor
      */
@@ -58,7 +60,7 @@ public:
     /**
      * Load the content of this node from its xml description.
      */
-    virtual bool unserialize(XmlElement *xmlElement) noexcept = 0;
+    virtual bool unserialize(tinyxml2::XMLElement *xmlElement) noexcept;
     /**
      * Convert the node's data into a xml description.
      */
@@ -68,13 +70,13 @@ public:
 /**
  * Geometric scnee node.
  */
-class GeometriceNode : public SceneNode
+class GeometricNode : public SceneNode
 {
 public:
     /**
      * Constructor.
      */
-    GeometricNode();
+    GeometricNode(const char *name, SceneNode *parent);
     /**
      * Destructor.
      */
@@ -83,11 +85,11 @@ public:
      * Parse the node's attributes from xml document.
      * @param xmlElement the XML node that contains information of this node.
      */
-    virtual bool unserialize(XmlElement *xmlElement) noexcept override;
+    virtual bool unserialize(tinyxml2::XMLElement *xmlElement) noexcept override;
     /**
      * If intersect with a given ray.
      */
-    virtual bool intersect(const Ray &ray) noexcept override = 0;
+    virtual bool intersect(const Ray &ray, vec3 &out_position, vec3 &out_normal) noexcept = 0;
 
 protected:
     /**
@@ -100,51 +102,59 @@ protected:
     void _updateGlobalTransform();
     /**
      */
-    void _parseScale(XmlElement *xmlElement);
+    void _parseScale(tinyxml2::XMLElement *xmlElement);
     /**
      */
-    void _parseTranslate(XmlElement *xmlElement);
+    void _parseTranslate(tinyxml2::XMLElement *xmlElement);
     /**
      */
-    void _parseRotate(XmlElement *xmlElement);
+    void _parseRotate(tinyxml2::XMLElement *xmlElement);
 };
 
 /**
+ * A sphere defined by position and radius.
  */
 class GeometricSphereNode : public GeometricNode
 {
 public:
     /**
      */
-    GeometricSphereNode();
+    GeometricSphereNode(const char *name, SceneNode *parent);
     /**
      */
     virtual ~GeometricSphereNode();
     /**
      * Read the parameter of the sphere node from xml doc.
      */
-    virtual bool unserialize(XmlElement *xmlElement) noexcept override;
+    virtual bool unserialize(tinyxml2::XMLElement *xmlElement) noexcept override;
     /**
      * If intersect with a given ray in world space.
      */
-    virtual bool intersect(const Ray &ray) noexcept override;
-protected:
-    /**
-     * Get the radius of the sphere.
-     */
-    inline f32 _radius() const { return this->_radius; };
-    /**
-     * Get the position of the sphere.
-     */
-    inline vec3  position() const { return this->_position  };
-    
-protected:
-    vec3 _position; /**< the coordinate of the center. */
-    f32  _radius;   /**< The radius. */
+    virtual bool intersect(const Ray &ray, vec3 &out_position, vec3 &out_normal) noexcept override;
+
+private:
+    f32 _radius; /**< The radius of the sphere. */
+    vec3 _position; /**< The position of the sphere center in world space. */
 };
 
 
-CS6620_END_NAMESPACE
+class SceneNodeFactory 
+{
+public:
+    /**
+     * Constructor.
+     */
+    SceneNodeFactory();
+    /**
+     * Destructor.
+     */
+    ~SceneNodeFactory();
+
+    static SceneNode *unserialize(tinyxml2::XMLElement *xmlElement, SceneNode *parent) noexcept;
+};
+
+
+CS6620_NAMESPACE_END
 
 
 #endif // !SCENE_NODE_HPP

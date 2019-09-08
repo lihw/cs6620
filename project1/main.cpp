@@ -7,29 +7,31 @@
  * The first project.
  */
 
-#include "common/scene.hpp"
-#include "common/camera.hpp"
-#include "common/view.hpp"
+#include "../common/scene.hpp"
+#include "../common/camera.hpp"
+#include "../common/view.hpp"
 
 int main(int argc, const char *argv[])
 {
     // Load scene.
     cs6620::Scene scene;
-    if (!scene.load("data/project1/scene.xml"))
+    if (!scene.load("../data/project1/scene.xml"))
     {
         return -1;
     }
 
-    // Create the preview view.
-    cs6620::View view(scene.camera.width, scene.camera.height);
+    scene.prepare();
 
-    cs6620::Camera::RayIterator ri, rb = scene.camera.beginRay(), re = scene.camera.endRay();
+    // Create the preview view.
+    cs6620::View view(scene.camera->width, scene.camera->height);
+
+    cs6620::Camera::RayIterator ri(scene.camera), rb = scene.camera->beginRay(), re = scene.camera->endRay();
     for (ri = rb; ri != re; ++ri)
     {
-        view.write(ri->sample, scene.shade(*ri));
+        view.write(ri.coordinate(), scene.shade(*ri));
     }
 
-    if (!view.dump("data/project1/result.ppm"))
+    if (!view.dump("../data/project1/result.ppm"))
     {
         return -1;
     }

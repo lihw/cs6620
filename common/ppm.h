@@ -11,9 +11,9 @@
 #define PPM_H
 
 
-extern unsigned char* ReadPPM(char* filename, int* width, int* height);
+extern unsigned char* ReadPPM(const char* filename, int* width, int* height);
 
-extern bool WritePPM(char* filename, int width, int height, const unsigned char *image);
+extern bool WritePPM(const char* filename, int width, int height, const unsigned char *image);
 
 
 

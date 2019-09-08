@@ -9,6 +9,12 @@
 
 #include "scene.hpp"
 
+#include "scene_node.hpp"
+#include "camera.hpp"
+#include "tree.hpp"
+
+#include <list>
+
 CS6620_NAMESPACE_BEGIN
 
 Scene::Scene()
@@ -20,10 +26,10 @@ Scene::~Scene()
     this->_destroy();
 }
 
-bool load(const char *sceneFile) noexcept
+bool Scene::load(const char *sceneFile) noexcept
 {
     // The scene has data already. Clear it first.
-    if (this->_root != nullptr)
+    if (this->root != nullptr)
     {
         LOG(WARNING) << "The scene's old data is cleared.";
 
@@ -32,83 +38,126 @@ bool load(const char *sceneFile) noexcept
 
     LOG(INFO) << "Start parsing XML '" << sceneFile << "'";
     
-    XMLDocument xmlDoc;
-    if (!xmlDoc.LoadFile(sceneFile))
+    tinyxml2::XMLDocument xmlDoc;
+    if (xmlDoc.LoadFile(sceneFile) != tinyxml2::XML_SUCCESS)
     {
         LOG(ERROR) << "Fail to parse " << sceneFile;
         return false;
     }
 
-    XmlElement *rootElement = xmlDoc.FirstChildElement();
-    if (strncmp(rootElement->GetName(), "xml") == 0)
+    tinyxml2::XMLElement *rootElement = xmlDoc.FirstChildElement();
+    if (strncmp(rootElement->Name(), "xml", 3) != 0)
     {
         LOG(ERROR) << "The scene's root node must be 'xml'";
         return false;
     }
     
-    XmlElement *sceneElement = rootElement->FirstChildElement();
-    if (strncmp(sceneElement->GetName(), "scene") == 0)
+    tinyxml2::XMLElement *sceneElement = rootElement->FirstChildElement();
+    if (strncmp(sceneElement->Name(), "scene", 5) != 0)
     {
         LOG(ERROR) << "The scene node is not found under root node'";
         return false;
     }
 
-    XmlElement *nodeElement = sceneElement->FirstChildElement();
+    assert(this->root == nullptr);
+
+    this->root = new SceneNode("root", nullptr);
+
+    tinyxml2::XMLElement *nodeElement = sceneElement->FirstChildElement();
     while (nodeElement != nullptr)
     {
-        if (strncmp(nodeElement->GetName(), "object") == 0)
+        if (strncmp(nodeElement->Name(), "object", 6) == 0)
         {
-            // TODO: use factory pattern!
-            GeometricNode *node = new GeometricNode();
-            node->nserialize(nodeElement);
-
-            this->_nodes.push_back(node);
-
-            if (this->_root == nullptr)
+            SceneNode *node = SceneNodeFactory::unserialize(nodeElement, this->root);
+            if (node == nullptr)
             {
-                this->_root = node;
+                LOG(ERROR) << "Fail to unserialize " << nodeElement->Name();
+                return false;
             }
+
+            this->root->children.push_back(node);
         }
-        else if (strncmp(nodeElement->GetName(), "camera") == 0)
-        {
-            if (this->_camera == nullptr)
-            {
-                this->_camera = new Camera();
-            }
-            this->_camera->unserialize(nodeElement);
-        }
+        
         nodeElement = nodeElement->NextSiblingElement();
+    }
+
+    tinyxml2::XMLElement *cameraElement = sceneElement->NextSiblingElement();
+    if (cameraElement != nullptr && strncmp(cameraElement->Name(), "camera", 6) == 0)
+    {
+        assert(this->camera == nullptr);
+
+        this->camera = new Camera();
+        this->camera->unserialize(cameraElement);
     }
     
     LOG(INFO) << "Parsing XML '" << sceneFile << "' succeeds!";
 
-    if (this->_nodes.empty())
+    if (this->root == nullptr)
     {
         LOG(ERROR) << "'" << sceneFile << "' doesn't contain any nodes.";
         return false;
     }
 
-    if (this->_camera == nullptr)
+    if (this->camera == nullptr)
     {
         LOG(WARNING) << "'" << sceneFile << "' doesn't contain any camera. Use default one!";
 
-        this->_camera = new Camera();
+        this->camera = new Camera();
     }
  
     return true;
 }
 
+void Scene::prepare() noexcept
+{
+    this->_tree = new Tree(this);
+}
+
 void Scene::_destroy()
 {
-    for (auto &&node : this->_nodes)
+    // Delete the scene nodes using BFS.
+    std::list<SceneNode *> nodes;
+    nodes.push_back(this->root);
+    while (!nodes.empty())
     {
+        SceneNode *node = nodes.front();
+        nodes.pop_front();
+
+        nodes.insert(nodes.end(), node->children.begin(), node->children.end());
+
         delete node;
     }
 
-    if (this->_camera)
+    this->root = nullptr;
+}
+
+vec3 Scene::shade(const Ray &ray)
+{
+    vec3 result;
+
+    SceneNode *node = nullptr;
+    vec3 position;
+    vec3 normal;
+    if (this->_tree->intersect(ray, node, position, normal))
     {
-        delete this->_camera;
+        // Direct lighting.
+        //result += this->_shader->shade(object, position, normal, scene->lights);
+        result = vec3(0, 0, 0);
+
+        // Indirect lighting.
+        //Ray reflect;
+        //this->_sampler->sample(object, position, ray, normal, &reflect);
+        //if (this->_tree->intersect(ray, &object, position, normal))
+        //{
+        //    result 
+        //}
     }
+    else
+    {
+        result = vec3(1, 1, 1);
+    }
+
+    return result;
 }
 
 

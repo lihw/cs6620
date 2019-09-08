@@ -13,6 +13,8 @@
 
 #include "common.h"
 
+#include <glog/logging.h>
+
 #include <cstdio>
 
 /* ReadPPM: read a PPM raw (type P6) file.  The PPM file has a header
@@ -44,7 +46,7 @@
  *
  */
 unsigned char* 
-ReadPPM(char* filename, int* width, int* height)
+ReadPPM(const char* filename, int* width, int* height)
 {
     FILE* fp;
     int i, w, h, d;
@@ -61,7 +63,7 @@ ReadPPM(char* filename, int* width, int* height)
        correct magic cookie for a raw PPM file. */
     fgets(head, 70, fp);
     if (strncmp(head, "P6", 2)) {
-        LOG(ERROR) << filename << "": Not a raw PPM file";
+        LOG(ERROR) << filename << " Not a raw PPM file";
         return NULL;
     }
     
@@ -93,11 +95,9 @@ ReadPPM(char* filename, int* width, int* height)
  * Write the image into an RGB .ppm file.
  */
 bool
-WritePPM(char* filename, int width, int height, const unsigned char *image)
+WritePPM(const char* filename, int width, int height, const unsigned char *image)
 {
     FILE* fp;
-    unsigned char* image;
-    char head[70];          /* max line <= 70 in PPM (per spec). */
     
     fp = fopen(filename, "wb");
     if (!fp) {

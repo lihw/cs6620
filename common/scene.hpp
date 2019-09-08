@@ -16,13 +16,24 @@
 #include <string>
 
 #include "tinyxml2.h"
-#include "cvMatrix.h"
-#include "cvVector.h"
+#include "cyMatrix.h"
+#include "cyVector.h"
 
-CS6620_BEGIN_NAMESPACE
+CS6620_NAMESPACE_BEGIN
 
+class Camera;
+class SceneNode;
+class Tree;
+class Ray;
+
+/**
+ * The world space is z-up
+ */
 class Scene 
 {
+public:
+    Camera    *camera = nullptr; /**< The scene camera. */
+    SceneNode *root   = nullptr;  /**< The scene node. */
 public:
     /**
      * Constructor
@@ -40,6 +51,16 @@ public:
      */
     bool load(const char *sceneFile) noexcept;
 
+    /**
+     * Pre-process the scene for following path tracing, e.g., build accelerate
+     * data structure for intersection.
+     */
+    void prepare() noexcept;
+
+    /**
+     * Compute the result color of the ray shooting from image plane.
+     */
+    vec3 shade(const Ray &ray);
 protected:
     /**
      * Destroy the scene.
@@ -47,13 +68,11 @@ protected:
     void _destroy();
 
 private:
-    std::vector<SceneNode *> _nodes; /**< The scene nodes arranged in a flattened array. */
-    SceneNode               *_root   = nullptr;  /**< The scene node. */
-    Camera                  *_camera = nullptr; /**< The scene camera. */
+    Tree *_tree = nullptr; /**< The intersection acceleration object. */
 };
 
 
-CS6620_END_NAMESPACE
+CS6620_NAMESPACE_END
 
 
 #endif // !SCENE_HPP
