@@ -24,11 +24,26 @@ int main(int argc, const char *argv[])
 
     // Create the preview view.
     cs6620::View view(scene.camera->width, scene.camera->height);
+        
+    const u32 N = 16;
+    cs6620::NaieSampler sampler(N);
+    vec2 *samples = sampler.samples();
 
-    cs6620::Camera::RayIterator ri(scene.camera), rb = scene.camera->beginRay(), re = scene.camera->endRay();
-    for (ri = rb; ri != re; ++ri)
+    for (u32 i = 0; i < camera.height; ++i)
+    for (u32 j = 0; j < camera.width; ++j)
     {
-        view.write(ri.coordinate(), scene.shade(*ri));
+        vec3 ray = vec3(0, 0, 0);
+        for (u32 s = 0; s < N; ++s)
+        {
+            f32 x = (f32)j + samples[s].x;
+            f32 y = (f32)i + samples[s].y;
+
+            Ray ray = scene.caemra->unproject(x, y);
+
+            color += scene.shade(ray);
+        }
+
+        view.write(sample.position(), color / (f32)N);
     }
 
     if (!view.dump("../data/project1/result.ppm"))

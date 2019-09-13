@@ -116,7 +116,7 @@ bool Camera::unserialize(tinyxml2::XMLElement *xmlElement) noexcept
     // Update the nearo, nearx and neary.
     // The world space is z-up right-hand.
 
-    f32 tanFovY = tanf(this->fovy * 0.5f);
+    f32 tanFovY = tanf(this->fovy * M_PI / 180.0f * 0.5f);
     f32 spany = this->target.Length() * tanFovY;
     f32 spanx = spany * (f32)this->width / (f32)this->height;
 
@@ -127,18 +127,24 @@ bool Camera::unserialize(tinyxml2::XMLElement *xmlElement) noexcept
     return true;
 }
     
-Camera::RayIterator Camera::beginRay() 
+Ray Camera::unproject(f32 x, f32 y) const
 {
-    RayIterator rayIterator(this);
-    return rayIterator;
+    Ray ray;
+
+    ray.origin = this->_camera->position;
+
+    auto xx = ((f32)_x + 0.5f) / (f32)this->_camera->width * 2.0f - 1.0f;
+    auto yy = ((f32)(this->_camera->height - 1 - y) + 0.5f) / (f32)this->_camera->height * 2.0f - 1.0f;
+    
+    vec3 sample = this->_camera->nearo + 
+        this->_camera->nearx * xx + this->_camera->nearz * yy;
+
+    ray.direction = sample - this->_ray.origin;
+    ray.direction.Normalize();
+
+    return ray;
 }
 
-Camera::RayIterator Camera::endRay() 
-{
-    RayIterator rayIterator(this);
-    rayIterator._x = 0;
-    rayIterator._y = this->height;
-    return rayIterator;
-}
+
 
 CS6620_NAMESPACE_END
