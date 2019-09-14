@@ -8,7 +8,9 @@
  */
 
 #include "sampler.hpp"
-    
+
+
+CS6620_NAMESPACE_BEGIN
     
 Sampler::Sampler(u32 n)
 {
@@ -34,17 +36,18 @@ NaiveSampler::NaiveSampler(u32 n)
     for (u32 i = 0; i < m; i++)
     for (u32 j = 0; j < m; j++)
     {
-        f32 x = (y + 0.5f) * inv;
+        f32 x = (j + 0.5f) * inv;
         f32 y = (i + 0.5f) * inv;
 
-        this->_samples[s++].x = x;
-        this->_samples[s++].y = y;
-    }
+        this->_samples[s].x = x;
+        this->_samples[s].y = y;
 
-    return &this->_samples[0];
+        s++;
+    }
 }
 
 NaiveSampler::~NaiveSampler()
 {
 }
     
+CS6620_NAMESPACE_END

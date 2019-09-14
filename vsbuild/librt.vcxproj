@@ -14,6 +14,7 @@
     <ClCompile Include="..\common\camera.cpp" />
     <ClCompile Include="..\common\lodepng.cpp" />
     <ClCompile Include="..\common\ppm.cpp" />
+    <ClCompile Include="..\common\sampler.cpp" />
     <ClCompile Include="..\common\scene.cpp" />
     <ClCompile Include="..\common\scene_node.cpp" />
     <ClCompile Include="..\common\tinyxml2.cpp" />
@@ -33,6 +34,7 @@
     <ClInclude Include="..\common\lodepng.h" />
     <ClInclude Include="..\common\ppm.h" />
     <ClInclude Include="..\common\ray.hpp" />
+    <ClInclude Include="..\common\sampler.hpp" />
     <ClInclude Include="..\common\scene.hpp" />
     <ClInclude Include="..\common\scene_node.hpp" />
     <ClInclude Include="..\common\shader.hpp" />

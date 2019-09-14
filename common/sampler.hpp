@@ -15,8 +15,6 @@
 #include <vector>
 
 CS6620_NAMESPACE_BEGIN
-CS6620_NAMESPACE_BEGIN
-
 
 class Sampler
 {
@@ -28,7 +26,7 @@ public:
      */
     virtual ~Sampler();
 
-    vec2 * samples() const { return &this->_samples[0]; }; 
+    vec2 * samples() { return &this->_samples[0]; }; 
 
 protected:
     std::vector<vec2> _samples;

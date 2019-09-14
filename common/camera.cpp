@@ -131,15 +131,15 @@ Ray Camera::unproject(f32 x, f32 y) const
 {
     Ray ray;
 
-    ray.origin = this->_camera->position;
+    ray.origin = this->position;
 
-    auto xx = ((f32)_x + 0.5f) / (f32)this->_camera->width * 2.0f - 1.0f;
-    auto yy = ((f32)(this->_camera->height - 1 - y) + 0.5f) / (f32)this->_camera->height * 2.0f - 1.0f;
+    auto xx = ((f32)x + 0.5f) / (f32)this->width * 2.0f - 1.0f;
+    auto yy = ((f32)(this->height - 1 - y) + 0.5f) / (f32)this->height * 2.0f - 1.0f;
     
-    vec3 sample = this->_camera->nearo + 
-        this->_camera->nearx * xx + this->_camera->nearz * yy;
+    vec3 sample = this->nearo + 
+        this->nearx * xx + this->nearz * yy;
 
-    ray.direction = sample - this->_ray.origin;
+    ray.direction = sample - ray.origin;
     ray.direction.Normalize();
 
     return ray;
