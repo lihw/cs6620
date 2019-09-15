@@ -57,8 +57,24 @@ GeometricNode::~GeometricNode()
     
 void GeometricNode::_parseScale(tinyxml2::XMLElement *xmlElement)
 {
+    f32 value;
     assert(strncmp(xmlElement->Name(), "scale", 5) == 0);
-    this->scale = xmlElement->FloatAttribute("value");
+    if (xmlElement->QueryAttribute("value", &value) == tinyxml2::XML_SUCCESS)
+    {
+        this->scale = vec3(value, value, value);
+    }
+    else
+    {
+        f32 x;
+        f32 y;
+        f32 z;
+        if (xmlElement->QueryAttribute("x", &x) == tinyxml2::XML_SUCCESS &&
+            xmlElement->QueryAttribute("y", &y) == tinyxml2::XML_SUCCESS &&
+            xmlElement->QueryAttribute("z", &z) == tinyxml2::XML_SUCCESS)
+        {
+            this->scale = vec3(x, y, z);
+        }
+    }
 }
 
 void GeometricNode::_parseTranslate(tinyxml2::XMLElement *xmlElement)
@@ -80,6 +96,12 @@ void GeometricNode::_parseRotate(tinyxml2::XMLElement *xmlElement)
 bool GeometricNode::unserialize(tinyxml2::XMLElement *xmlElement) noexcept
 {
     SceneNode::unserialize(xmlElement);
+
+    const char *material = xmlElement->Attribute("material");
+    if (material != nullptr)
+    {
+        this->_material = material;
+    }
 
     tinyxml2::XMLElement *childElement = xmlElement->FirstChildElement();
 
@@ -211,6 +233,8 @@ bool GeometricSphereNode::intersect(const Ray &ray, vec3 &out_position, vec3 &ou
 
     return distance2 <= this->_radius * this->_radius;
 }
+
+
     
 //
 // class SceneNodeFactory

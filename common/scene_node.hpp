@@ -29,16 +29,18 @@ CS6620_NAMESPACE_BEGIN
 class SceneNode 
 {
 public:
-    enum class Type
+    enum class Category
     {
         UNKNOWN,        /**< Unknown. */
         ROOT,           /**< The scene root. */
         GEOMETRY,       /**< A geometric object. */
-    } type;       
+        LIGHT,          /**< Lights. */
+        MATERIAL,       /**< Materials. */
+    } category;       
 
     std::string name;
 
-    f32  scale;        /**< Local transformation. */
+    vec3 scale;        /**< Local transformation. */
     vec3 translate;
     vec3 rotate;
 
@@ -136,7 +138,6 @@ private:
     f32 _radius; /**< The radius of the sphere. */
     vec3 _position; /**< The position of the sphere center in world space. */
 };
-
 
 class SceneNodeFactory 
 {
