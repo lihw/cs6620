@@ -25,6 +25,8 @@ class Camera;
 class SceneNode;
 class Tree;
 class Ray;
+class Light;
+class Material;
 
 /**
  * The world space is z-up
@@ -69,6 +71,8 @@ protected:
 
 private:
     Tree *_tree = nullptr; /**< The intersection acceleration object. */
+    std::vector<Light *> _lights;      /**< The lights in the scene. */
+    std::vector<Material *> _materials;/**< The materials used in the scene. */
 };
 
 

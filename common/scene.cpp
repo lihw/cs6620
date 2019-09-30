@@ -12,6 +12,8 @@
 #include "scene_node.hpp"
 #include "camera.hpp"
 #include "tree.hpp"
+#include "light.hpp"
+#include "material.hpp"
 
 #include <list>
 
@@ -77,6 +79,28 @@ bool Scene::load(const char *sceneFile) noexcept
 
             this->root->children.push_back(node);
         }
+        else if (strncmp(nodeElement->Name(), "light", 5) == 0)
+        {
+            Light *light = new Light(nodeElement->Attribute("name"), this->root);
+            if (light->unserialize(nodeElement))
+            {
+                LOG(ERROR) << "Fail to unserialize " << nodeElement->Name();
+                return false;
+            }
+
+            this->_lights.push_back(light);
+        }
+        else if (strncmp(nodeElement->Name(), "material", 8) == 0)
+        {
+            Material *material = MaterialFactory::unserialize(nodeElement);
+            if (material == nullptr)
+            {
+                LOG(ERROR) << "Fail to unserialize " << nodeElement->Name();
+                return false;
+            }
+
+            this->_materials.push_back(material);
+        }
         
         nodeElement = nodeElement->NextSiblingElement();
     }
@@ -104,6 +128,32 @@ bool Scene::load(const char *sceneFile) noexcept
 
         this->camera = new Camera();
     }
+
+    /**
+     * Find the material object for each scene node.
+     */
+    std::list<SceneNode *> nodes;
+    nodes.push_back(this->root);
+    while (!nodes.empty())
+    {
+        SceneNode *node = nodes.front();
+        nodes.pop_front();
+
+        nodes.insert(nodes.end(), node->children.begin(), node->children.end());
+
+        if (node->materialName != "")
+        {
+            for (auto &&material : this->_materials)
+            {
+                if (material->name == node->materialName)
+                {
+                    node->material = material;
+                    break;
+                }
+            }
+        }
+    }
+
  
     return true;
 }
@@ -127,8 +177,20 @@ void Scene::_destroy()
 
         delete node;
     }
-
+    
     this->root = nullptr;
+
+    /**
+     * Destroy lights and materials of the scene.
+     */
+    for (auto &&light : this->_lights)
+    {
+        delete light;
+    }
+    for (auto &&material : this->_materials)
+    {
+        delete material;
+    }
 }
 
 vec3 Scene::shade(const Ray &ray)
@@ -140,9 +202,19 @@ vec3 Scene::shade(const Ray &ray)
     vec3 normal;
     if (this->_tree->intersect(ray, node, position, normal))
     {
-        // Direct lighting.
-        //result += this->_shader->shade(object, position, normal, scene->lights);
         result = vec3(0, 0, 0);
+        if (node->material != nullptr)
+        {
+            /**
+             * Accumulate the direct lighting by each light in the scene 
+             * to this surfels.
+             */
+            const vec3 view = (position - this->camera->position).GetNormalized();
+            for (auto &light : this->_lights)
+            {
+                result += node->material->shade(*light, light->incident(position), view, normal);
+            }
+        }
 
         // Indirect lighting.
         //Ray reflect;

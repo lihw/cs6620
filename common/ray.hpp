@@ -27,6 +27,25 @@ public:
         origin.Zero();
         direction = vec3(1.0f, 0.0f, 0.0f);
     }
+
+    /**
+     * Transform this ray to another space by the given transform.
+     */
+    inline void transform(const mat4& t)
+    {
+        origin = (t * this->origin).XYZ();
+        direction = (t * this->direction).XYZ();
+    }
+    
+    inline Ray getTransformed(const mat4 &t) const
+    {
+        Ray ret;
+        
+        ret.origin = (t * this->origin).XYZ();
+        ret.direction = (t * this->direction).XYZ();
+        
+        return ret;
+    }
 };
 
 

@@ -32,7 +32,7 @@ typedef cy::Vec2<f32> vec2;
 typedef cy::Matrix4<f32> mat4;
 typedef cy::Vec2<u32> vec2u;
 
-#define M_PI 3.11415926f
+//#define M_PI 3.11415926f
 
 
 #endif // !COMMON_H

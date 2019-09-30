@@ -19,23 +19,24 @@
 #include "cyMatrix.h"
 #include "cyVector.h"
 
-#include "scene_node.hpp"
-
 CS6620_NAMESPACE_BEGIN
+
+class Light;
 
 /**
  * The base class of scene nodes.
  */
-class Material : public SceneNode
+class Material 
 {
 public:
+    std::string name;
     std::string type;
 
 public:
     /**
      * Constructor
      */
-    Material(const char *name, SceneNode *parent);
+    Material(const char *name, const char *type);
     /**
      * Destructor
      */
@@ -47,19 +48,23 @@ public:
     /**
      * Compute the shading color with the material properties.
      */
-    virtual vec3 shade(const vec3 &incident, vec3 &reflection, vec3 &normal) const noexcept;
+    virtual vec3 shade(const Light &light, const vec3 &incident, const vec3 &reflection, const vec3 &normal) const noexcept;
 };
 
 /**
  * Geometric scnee node.
  */
-class BlinnMaterial : public MaterialNode
+class BlinnMaterial : public Material
 {
+public:
+    vec3 diffuse;
+    f32  glossiness;
+    vec3 specular;
 public:
     /**
      * Constructor.
      */
-    BlinnMaterial(const char *name, SceneNode *parent);
+    BlinnMaterial(const char *name);
     /**
      * Destructor.
      */
@@ -72,7 +77,7 @@ public:
     /**
      * Compute the shading color with the material properties.
      */
-    virtual vec3 shade(const vec3 &incident, vec3 &reflection, vec3 &normal) const noexcept;
+    virtual vec3 shade(const Light &light, const vec3 &incident, const vec3 &reflection, const vec3 &normal) const noexcept override;
 
 protected:
     /**
@@ -81,6 +86,15 @@ protected:
     /**
      */
     void _parseDiffuse(tinyxml2::XMLElement *xmlElement);
+    /**
+     */
+    void _parseGlossiness(tinyxml2::XMLElement *xmlElement);
+};
+
+class MaterialFactory
+{
+public:
+    static Material *unserialize(tinyxml2::XMLElement *xmlElement);
 };
 
 

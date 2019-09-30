@@ -50,6 +50,10 @@ public:
      */
     virtual bool unserialize(tinyxml2::XMLElement *xmlElement) noexcept override;
 
+    /**
+     * Fetch the incident light direction.
+     */
+    vec3 incident(const vec3 &position) const;
 private:
     /**
      */
@@ -57,6 +61,9 @@ private:
     /**
      */
     void _parseDirection(tinyxml2::XMLElement *xmlElement);
+    /**
+     */
+    void _parsePosition(tinyxml2::XMLElement *xmlElement);
 };
 
 

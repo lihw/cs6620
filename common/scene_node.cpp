@@ -9,7 +9,12 @@
 
 #include "scene_node.hpp"
 
+#include "light.hpp"
+#include "material.hpp"
+#include "intersect.hpp"
+
 #include <list>
+
 
 CS6620_NAMESPACE_BEGIN
 
@@ -19,9 +24,9 @@ CS6620_NAMESPACE_BEGIN
 SceneNode::SceneNode(const char *nameStr, SceneNode *parent)
     : name(nameStr)
 {
-    this->type = Type::UNKNOWN;
+    this->category = Category::UNKNOWN;
 
-    this->scale = 1.0f;
+    this->scale = vec3(1.0f, 1.0f, 1.0f);
     this->rotate.Zero();
     this->translate.Zero();
 
@@ -48,7 +53,7 @@ bool SceneNode::unserialize(tinyxml2::XMLElement *xmlElement) noexcept
 GeometricNode::GeometricNode(const char *name, SceneNode *parent) 
     : SceneNode(name, parent)
 {
-    this->type = SceneNode::Type::GEOMETRY;
+    this->category = SceneNode::Category::GEOMETRY;
 }
 
 GeometricNode::~GeometricNode()
@@ -100,7 +105,7 @@ bool GeometricNode::unserialize(tinyxml2::XMLElement *xmlElement) noexcept
     const char *material = xmlElement->Attribute("material");
     if (material != nullptr)
     {
-        this->_material = material;
+        this->materialName = material;
     }
 
     tinyxml2::XMLElement *childElement = xmlElement->FirstChildElement();
@@ -224,16 +229,22 @@ bool GeometricSphereNode::unserialize(tinyxml2::XMLElement *xmlElement) noexcept
 
 bool GeometricSphereNode::intersect(const Ray &ray, vec3 &out_position, vec3 &out_normal) noexcept
 {
-    // The projection of the distance between sphere and ray origin onto the ray direction.
-    vec3 direction = this->_position - ray.origin;
-    f32 projection = direction.Dot(ray.direction);
+    if (this->scale.x == this->scale.y == this->scale.z)
+    {
+        return Intersect::ray_sphere(ray, this->_position, this->_radius, 
+                &out_position, &out_normal);
+    }
+    else
+    {
+        const Ray rayt = ray.getTransformed(this->globalTransform.GetInverse());
 
-    // Compute the distance from the sphere center to the ray direction.
-    f32 distance2 = direction.LengthSquared() - projection * projection;
+        return Intersect::ray_sphere(rayt, vec3(0, 0, 0), 1.0f, 
+                &out_position, &out_normal);
 
-    return distance2 <= this->_radius * this->_radius;
+        out_position = (this->globalTransform * out_position).XYZ();
+        out_normal = (this->globalTransform.GetInverse().GetTranspose() * out_normal).XYZ();
+    }
 }
-
 
     
 //

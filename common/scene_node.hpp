@@ -23,6 +23,8 @@
 
 CS6620_NAMESPACE_BEGIN
 
+class Material;
+
 /**
  * The base class of scene nodes.
  */
@@ -34,8 +36,6 @@ public:
         UNKNOWN,        /**< Unknown. */
         ROOT,           /**< The scene root. */
         GEOMETRY,       /**< A geometric object. */
-        LIGHT,          /**< Lights. */
-        MATERIAL,       /**< Materials. */
     } category;       
 
     std::string name;
@@ -49,6 +49,9 @@ public:
 
     SceneNode               *parent    = nullptr;
     std::vector<SceneNode *> children;
+
+    std::string  materialName = "";
+    Material    *material = nullptr; /**< The material object of this node. */
 
 public:
     /**
@@ -111,6 +114,9 @@ protected:
     /**
      */
     void _parseRotate(tinyxml2::XMLElement *xmlElement);
+
+protected:
+    Material *_material = nullptr;
 };
 
 /**

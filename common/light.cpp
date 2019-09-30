@@ -9,11 +9,12 @@
 
 #include "light.hpp"
 
+#include "scene.hpp"
 
 CS6620_NAMESPACE_BEGIN
 
-Light::Light(const char *name, Scene *parent)
-    : Scene(name, parent)
+Light::Light(const char *name, SceneNode *parent)
+    : SceneNode(name, parent)
 {
     type = AMBIENT;
     this->intensity = 1.0;
@@ -48,6 +49,9 @@ bool Light::unserialize(tinyxml2::XMLElement *xmlElement) noexcept
 
     tinyxml2::XMLElement *childElement = xmlElement->FirstChildElement();
 
+    bool seenIntensity = false;
+    bool seenDirection = false;
+    bool seenPosition = false;
     // Parse the element and extract properties of the light.
     while (childElement != nullptr)
     {
@@ -72,8 +76,8 @@ bool Light::unserialize(tinyxml2::XMLElement *xmlElement) noexcept
     }
 
     if (!seenIntensity ||
-        (type == DIRECT && !seenDirection) ||
-        (type == POINT && !seenPosition))
+        (this->type == DIRECT && !seenDirection) ||
+        (this->type == POINT && !seenPosition))
     {
         LOG(WARNING) << "Doesn't see all properties about light ''" << this->name << "'. Use default values";
     }
@@ -101,6 +105,24 @@ void Light::_parsePosition(tinyxml2::XMLElement *xmlElement)
     this->position.x = xmlElement->FloatAttribute("x");
     this->position.y = xmlElement->FloatAttribute("y");
     this->position.z = xmlElement->FloatAttribute("z");
+}
+    
+vec3 Light::incident(const vec3 &position) const
+{
+    switch (this->type)
+    {
+        case AMBIENT:
+            return this->direction;
+        case DIRECT:
+            return this->direction;
+        case POINT:
+            return (position - this->position).GetNormalized();
+        default:
+            LOG(ERROR) << "Unsupport light type!";
+            break;
+    }
+
+    return vec3(0, 0, 0);
 }
 
 CS6620_NAMESPACE_END

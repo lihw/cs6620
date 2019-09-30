@@ -49,7 +49,7 @@ unsigned char*
 ReadPPM(const char* filename, int* width, int* height)
 {
     FILE* fp;
-    int i, w, h, d;
+    int i, w = 1, h = 1, d = 1;
     unsigned char* image;
     char head[70];          /* max line <= 70 in PPM (per spec). */
     
