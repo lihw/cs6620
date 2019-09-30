@@ -41,7 +41,7 @@ public:
      * @param out_normal return the normal at the intersection point.
      * @return return true if the ray intersection happens.
      */
-    bool intersect(const Ray &ray, SceneNode *out_node, vec3 &out_position, vec3 &out_normal) noexcept;
+    bool intersect(const Ray &ray, SceneNode *&out_node, vec3 &out_position, vec3 &out_normal) noexcept;
 
 private:
     std::vector<SceneNode *> _nodes; /**< The nodes of the scene in a flat array .*/

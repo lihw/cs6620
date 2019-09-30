@@ -38,7 +38,7 @@ Tree::~Tree()
 {
 }
 
-bool Tree::intersect(const Ray &ray, SceneNode *out_node, vec3 &out_position, vec3 &out_normal) noexcept
+bool Tree::intersect(const Ray &ray, SceneNode *&out_node, vec3 &out_position, vec3 &out_normal) noexcept
 {
     for (auto &&node : this->_nodes)
     {

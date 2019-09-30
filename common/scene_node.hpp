@@ -46,6 +46,7 @@ public:
 
     mat4 transform; /**< Local transformation matrix. */
     mat4 globalTransform; /**< The global transformation matrix. */
+    mat4 invGlobalTransform; /**< The inverse of global transform matrix. */
 
     SceneNode               *parent    = nullptr;
     std::vector<SceneNode *> children;

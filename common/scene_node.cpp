@@ -200,6 +200,8 @@ void GeometricNode::_updateGlobalTransform()
     {
         this->globalTransform = this->transform;
     }
+    
+    this->invGlobalTransform = this->transform.GetInverse();
 }
 
 GeometricSphereNode::GeometricSphereNode(const char *name, SceneNode *parent)
@@ -236,13 +238,20 @@ bool GeometricSphereNode::intersect(const Ray &ray, vec3 &out_position, vec3 &ou
     }
     else
     {
-        const Ray rayt = ray.getTransformed(this->globalTransform.GetInverse());
+        const Ray rayt = ray.getTransformed(this->invGlobalTransform);
 
-        return Intersect::ray_sphere(rayt, vec3(0, 0, 0), 1.0f, 
-                &out_position, &out_normal);
-
-        out_position = (this->globalTransform * out_position).XYZ();
-        out_normal = (this->globalTransform.GetInverse().GetTranspose() * out_normal).XYZ();
+        if (Intersect::ray_sphere(rayt, vec3(0, 0, 0), 1.0f,
+                &out_position, &out_normal))
+        {
+            out_position = (this->globalTransform * out_position).XYZ();
+            out_normal = (this->invGlobalTransform.GetTranspose() * out_normal).XYZ().GetNormalized();
+            
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 }
 

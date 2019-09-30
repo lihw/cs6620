@@ -97,6 +97,8 @@ void Light::_parseDirection(tinyxml2::XMLElement *xmlElement)
     this->direction.x = xmlElement->FloatAttribute("x");
     this->direction.y = xmlElement->FloatAttribute("y");
     this->direction.z = xmlElement->FloatAttribute("z");
+    
+    this->direction.Normalize();
 }
 
 void Light::_parsePosition(tinyxml2::XMLElement *xmlElement)

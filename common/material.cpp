@@ -102,7 +102,7 @@ vec3 BlinnMaterial::shade(const Light &light, const vec3& incident, const vec3 &
                 f32 ndotl = -incident.Dot(normal);
                 vec3 reflect = normal * -2.0f * incident.Dot(normal) + incident;
                 vec3 h = (reflect + normal) * 0.5f;
-                f32 ndoth = h.Dot(normal);
+                f32 ndoth = h.Dot(normal.GetNormalized());
                 return ndotl * this->diffuse + pow(ndoth, this->glossiness) * this->specular;
             }
         default:

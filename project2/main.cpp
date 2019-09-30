@@ -49,13 +49,13 @@ int main(int argc, const char *argv[])
         view.write(vec2u(j, i), color / (f32)N);
     }
 
-    if (!view.dump("../data/project2/result.ppm"))
+    if (!view.dump("../data/project2/result.png"))
     {
         return -1;
     }
     else
     {
-        LOG(INFO) << "Render succeeds. The result image dumps to data/project2/result.ppm";
+        LOG(INFO) << "Render succeeds. The result image dumps to data/project2/result.png";
     }
 
     return 0;

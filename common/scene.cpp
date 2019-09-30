@@ -82,7 +82,7 @@ bool Scene::load(const char *sceneFile) noexcept
         else if (strncmp(nodeElement->Name(), "light", 5) == 0)
         {
             Light *light = new Light(nodeElement->Attribute("name"), this->root);
-            if (light->unserialize(nodeElement))
+            if (!light->unserialize(nodeElement))
             {
                 LOG(ERROR) << "Fail to unserialize " << nodeElement->Name();
                 return false;
@@ -111,7 +111,11 @@ bool Scene::load(const char *sceneFile) noexcept
         assert(this->camera == nullptr);
 
         this->camera = new Camera();
-        this->camera->unserialize(cameraElement);
+        if (!this->camera->unserialize(cameraElement))
+        {
+            LOG(ERROR) << "Fail to unserialize camera '" << cameraElement->Name() << "'";
+            return false;
+        }
     }
     
     LOG(INFO) << "Parsing XML '" << sceneFile << "' succeeds!";

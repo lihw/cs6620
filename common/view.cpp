@@ -10,6 +10,7 @@
 #include "view.hpp"
 
 #include "ppm.h"
+#include "lodepng.h"
 
 #include <cassert>
 
@@ -34,7 +35,10 @@ bool View::dump(const char *outputFilePath) const noexcept
 {
     u8 *imageRGB8 = new u8 [this->_width * this->_height * 3];
     CvtRgb32f2Rgb8(this->_image, this->_width, this->_height, imageRGB8);
-    bool ret = WritePPM(outputFilePath, this->_width, this->_height, imageRGB8);
+    //bool ret = WritePPM(outputFilePath, this->_width, this->_height, imageRGB8);
+    int ret1 = lodepng_encode_file(outputFilePath, imageRGB8, this->_width, this->_height, LCT_RGB, 8);
+    bool ret =(ret1 == 0);
+
     delete [] imageRGB8;
     return ret;
 }
